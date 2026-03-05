@@ -1,16 +1,7 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": "public/**",
-        "zeroConfig": true
-      }
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

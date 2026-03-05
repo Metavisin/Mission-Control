@@ -1,1163 +1,1579 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mission Control Dashboard</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      :root {
-        --primary: #7c3aed;
-        --primary-light: #a78bfa;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --neutral-900: #0f172a;
-        --neutral-800: #1e293b;
-        --neutral-700: #334155;
-        --neutral-600: #475569;
-        --neutral-400: #cbd5e1;
-        --neutral-300: #e2e8f0;
-        --neutral-100: #f1f5f9;
-        --text-primary: #f1f5f9;
-        --text-secondary: #cbd5e1;
-        --border: #334155;
-        --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-        --radius: 12px;
-      }
-
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-          Ubuntu, Cantarell, sans-serif;
-        background: linear-gradient(135deg, var(--neutral-900) 0%, #1a1f3a 100%);
-        color: var(--text-primary);
-        min-height: 100vh;
-      }
-
-      .container {
-        max-width: 1600px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-
-      header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 40px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .header-title {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-      }
-
-      .header-title h1 {
-        font-size: 28px;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--primary-light), #60a5fa);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-
-      .header-badge {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: var(--neutral-800);
-        padding: 8px 16px;
-        border-radius: var(--radius);
-        font-size: 14px;
-        border: 1px solid var(--border);
-      }
-
-      .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--success);
-        animation: pulse 2s infinite;
-      }
-
-      @keyframes pulse {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.5;
-        }
-      }
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-        gap: 20px;
-        margin-bottom: 20px;
-      }
-
-      .grid-full {
-        grid-column: 1 / -1;
-      }
-
-      .card {
-        background: var(--neutral-800);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 24px;
-        backdrop-filter: blur(10px);
-        transition: all 0.3s ease;
-      }
-
-      .card:hover {
-        border-color: var(--primary);
-        box-shadow: 0 0 20px rgba(124, 58, 237, 0.1);
-      }
-
-      .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 16px;
-        padding-bottom: 12px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .card-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 18px;
-        font-weight: 600;
-      }
-
-      .card-title .emoji {
-        font-size: 24px;
-      }
-
-      .card-subtitle {
-        font-size: 12px;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .usage-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-      }
-
-      .usage-item {
-        background: var(--neutral-900);
-        padding: 16px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-      }
-
-      .usage-label {
-        font-size: 12px;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        margin-bottom: 8px;
-      }
-
-      .usage-value {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 8px;
-      }
-
-      .progress-bar {
-        width: 100%;
-        height: 6px;
-        background: var(--neutral-700);
-        border-radius: 3px;
-        overflow: hidden;
-      }
-
-      .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--primary), var(--primary-light));
-        transition: width 0.3s ease;
-      }
-
-      .usage-percent {
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin-top: 4px;
-      }
-
-      .agent-item {
-        background: var(--neutral-900);
-        padding: 16px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        margin-bottom: 12px;
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-      }
-
-      .agent-avatar {
-        font-size: 24px;
-        min-width: 32px;
-        text-align: center;
-      }
-
-      .agent-info {
-        flex: 1;
-      }
-
-      .agent-name {
-        font-weight: 600;
-        margin-bottom: 4px;
-      }
-
-      .agent-activity {
-        font-size: 13px;
-        color: var(--text-secondary);
-        margin-bottom: 4px;
-      }
-
-      .agent-status {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-      }
-
-      .status-active {
-        color: var(--success);
-      }
-
-      .status-idle {
-        color: var(--warning);
-      }
-
-      .status-offline {
-        color: var(--danger);
-      }
-
-      .uptime {
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin-top: 4px;
-      }
-
-      .task-item {
-        background: var(--neutral-900);
-        padding: 16px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        margin-bottom: 12px;
-      }
-
-      .task-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 8px;
-      }
-
-      .task-title {
-        font-weight: 600;
-        flex: 1;
-      }
-
-      .task-priority {
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
-      }
-
-      .priority-high {
-        background: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
-      }
-
-      .priority-medium {
-        background: rgba(245, 158, 11, 0.2);
-        color: #fbbf24;
-      }
-
-      .priority-low {
-        background: rgba(16, 185, 129, 0.2);
-        color: #6ee7b7;
-      }
-
-      .task-assigned {
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin-bottom: 8px;
-      }
-
-      .task-progress {
-        margin-bottom: 8px;
-      }
-
-      .progress-label {
-        display: flex;
-        justify-content: space-between;
-        font-size: 12px;
-        margin-bottom: 4px;
-      }
-
-      .cron-item {
-        background: var(--neutral-900);
-        padding: 16px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        margin-bottom: 12px;
-      }
-
-      .cron-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-      }
-
-      .cron-name {
-        font-weight: 600;
-        flex: 1;
-      }
-
-      .cron-status {
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
-      }
-
-      .status-ok {
-        background: rgba(16, 185, 129, 0.2);
-        color: #6ee7b7;
-      }
-
-      .status-error {
-        background: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
-      }
-
-      .cron-details {
-        font-size: 12px;
-        color: var(--text-secondary);
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-      }
-
-      .cron-detail {
-        padding: 8px;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 4px;
-      }
-
-      .todo-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: var(--neutral-900);
-        padding: 12px 16px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        margin-bottom: 8px;
-        transition: all 0.2s ease;
-      }
-
-      .todo-item.completed {
-        opacity: 0.6;
-      }
-
-      .todo-item.completed .todo-text {
-        text-decoration: line-through;
-      }
-
-      .todo-checkbox {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-        accent-color: var(--primary);
-      }
-
-      .todo-text {
-        flex: 1;
-      }
-
-      .todo-assigned {
-        font-size: 12px;
-        color: var(--text-secondary);
-      }
-
-      .btn {
-        padding: 12px 16px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 14px;
-      }
-
-      .btn-primary {
-        background: var(--primary);
-        color: white;
-      }
-
-      .btn-primary:hover {
-        background: #6d28d9;
-      }
-
-      .btn-secondary {
-        background: var(--neutral-700);
-        color: white;
-      }
-
-      .btn-secondary:hover {
-        background: var(--neutral-600);
-      }
-
-      .btn-small {
-        padding: 6px 12px;
-        font-size: 12px;
-      }
-
-      .btn-danger {
-        background: var(--danger);
-        color: white;
-      }
-
-      .btn-danger:hover {
-        background: #dc2626;
-      }
-
-      .form-group {
-        margin-bottom: 16px;
-      }
-
-      .form-group label {
-        display: block;
-        margin-bottom: 6px;
-        font-weight: 500;
-        font-size: 14px;
-      }
-
-      .form-group input,
-      .form-group select,
-      .form-group textarea {
-        width: 100%;
-        padding: 10px 12px;
-        background: var(--neutral-700);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        color: var(--text-primary);
-        font-size: 14px;
-        font-family: inherit;
-      }
-
-      .form-group input:focus,
-      .form-group select:focus,
-      .form-group textarea:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-      }
-
-      .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 1000;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .modal.active {
-        display: flex;
-      }
-
-      .modal-content {
-        background: var(--neutral-800);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 32px;
-        max-width: 500px;
-        width: 90%;
-        max-height: 90vh;
-        overflow-y: auto;
-      }
-
-      .modal-header {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 24px;
-      }
-
-      .modal-footer {
-        display: flex;
-        gap: 12px;
-        justify-content: flex-end;
-        margin-top: 24px;
-      }
-
-      .refresh-btn {
-        background: var(--neutral-700);
-        border: none;
-        color: var(--text-primary);
-        padding: 8px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 12px;
-      }
-
-      .refresh-btn:hover {
-        background: var(--neutral-600);
-      }
-
-      .stats-row {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 16px;
-        justify-content: space-between;
-      }
-
-      .stat-box {
-        flex: 1;
-        background: var(--neutral-900);
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        text-align: center;
-      }
-
-      .stat-value {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--primary);
-      }
-
-      .stat-label {
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin-top: 4px;
-      }
-
-      .empty-state {
-        text-align: center;
-        padding: 32px;
-        color: var(--text-secondary);
-      }
-
-      @media (max-width: 768px) {
-        .grid {
-          grid-template-columns: 1fr;
-        }
-
-        .usage-grid {
-          grid-template-columns: 1fr;
-        }
-
-        header {
-          flex-direction: column;
-          gap: 12px;
-          align-items: flex-start;
-        }
-
-        .header-title h1 {
-          font-size: 24px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <div class="header-title">
-          <h1>🎛️ Mission Control</h1>
-          <div class="header-badge">
-            <div class="status-dot"></div>
-            Live Monitoring
-          </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Control — MetaVision</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080A10;
+      --surface:   #0F1117;
+      --card:      #161922;
+      --card-alt:  #1D2130;
+      --border:    rgba(255,255,255,0.07);
+      --border-hi: rgba(255,255,255,0.13);
+      --accent:    #6366F1;
+      --accent-hi: #818CF8;
+      --accent-glow: rgba(99,102,241,0.25);
+      --green:     #22C55E;
+      --green-dim: rgba(34,197,94,0.15);
+      --amber:     #F59E0B;
+      --amber-dim: rgba(245,158,11,0.15);
+      --red:       #EF4444;
+      --red-dim:   rgba(239,68,68,0.15);
+      --blue:      #38BDF8;
+      --blue-dim:  rgba(56,189,248,0.15);
+      --purple:    #A855F7;
+      --t1:        #F1F5F9;
+      --t2:        #94A3B8;
+      --t3:        #475569;
+      --radius:    14px;
+      --radius-sm: 8px;
+      --sidebar-w: 240px;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--t1);
+      display: flex;
+      overflow: hidden;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 4px; }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 0;
+      position: relative;
+      z-index: 10;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo-sub { font-size: 11px; color: var(--t3); font-weight: 400; }
+
+    .nav-section { padding: 0 12px; margin-bottom: 8px; }
+    .nav-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.8px;
+      text-transform: uppercase; color: var(--t3);
+      padding: 0 8px; margin-bottom: 6px;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: var(--radius-sm);
+      cursor: pointer; transition: all 0.15s;
+      color: var(--t2); font-weight: 500;
+      user-select: none;
+    }
+    .nav-item:hover { background: var(--card); color: var(--t1); }
+    .nav-item.active {
+      background: var(--accent-glow);
+      color: var(--accent-hi);
+      border: 1px solid rgba(99,102,241,0.2);
+    }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto; background: var(--accent); color: white;
+      font-size: 10px; font-weight: 700; padding: 2px 6px;
+      border-radius: 20px; min-width: 18px; text-align: center;
+    }
+
+    .sidebar-footer {
+      margin-top: auto; padding: 16px 20px 0;
+      border-top: 1px solid var(--border);
+    }
+    .sys-status {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--t2);
+    }
+    .pulse-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.6; transform:scale(0.85); } }
+
+    /* ─── MAIN ─── */
+    .main {
+      flex: 1; height: 100vh; overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky; top: 0; z-index: 5;
+      backdrop-filter: blur(12px);
+    }
+    .topbar-left h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+    .topbar-left p { font-size: 13px; color: var(--t2); margin-top: 2px; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      border: none; transition: all 0.15s; font-family: inherit;
+    }
+    .btn-primary {
+      background: var(--accent); color: white;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+    .btn-primary:hover { background: var(--accent-hi); transform: translateY(-1px); }
+    .btn-ghost {
+      background: var(--card); color: var(--t2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--card-alt); color: var(--t1); }
+    .btn-danger {
+      background: var(--red-dim); color: var(--red);
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+    .btn-danger:hover { background: var(--red); color: white; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    /* ─── CONTENT ─── */
+    .content { padding: 28px 32px; flex: 1; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ─── STAT CARDS ─── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .stat-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
+    .stat-label { font-size: 12px; color: var(--t2); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 28px; font-weight: 800; margin: 8px 0 4px; letter-spacing: -1px; }
+    .stat-sub { font-size: 12px; color: var(--t3); }
+    .stat-icon { font-size: 22px; margin-bottom: 10px; }
+
+    /* ─── GRID LAYOUTS ─── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 20px; border-bottom: 1px solid var(--border);
+    }
+    .card-title { font-size: 14px; font-weight: 700; }
+    .card-body { padding: 20px; }
+    .card-full { grid-column: 1 / -1; }
+
+    /* ─── PROGRESS BARS ─── */
+    .progress-wrap { margin-bottom: 16px; }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 13px; margin-bottom: 6px;
+    }
+    .progress-label span:first-child { color: var(--t2); }
+    .progress-label span:last-child { font-weight: 600; }
+    .progress-bar {
+      height: 6px; border-radius: 10px;
+      background: var(--card-alt); overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 10px;
+      background: linear-gradient(90deg, var(--accent), var(--blue));
+      transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    }
+    .progress-fill.green { background: linear-gradient(90deg, #16A34A, var(--green)); }
+    .progress-fill.amber { background: linear-gradient(90deg, #D97706, var(--amber)); }
+    .progress-fill.red { background: linear-gradient(90deg, #DC2626, var(--red)); }
+
+    /* ─── GAUGE ─── */
+    .gauge-wrap {
+      display: flex; flex-direction: column; align-items: center; padding: 10px 0;
+    }
+    .gauge-canvas { max-width: 180px; }
+    .gauge-label { font-size: 13px; color: var(--t2); margin-top: 8px; }
+    .gauge-value { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+
+    /* ─── CHART CONTAINER ─── */
+    .chart-wrap { position: relative; height: 200px; }
+    .chart-wrap-tall { position: relative; height: 260px; }
+
+    /* ─── AGENT CARDS ─── */
+    .agent-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px; margin-bottom: 24px;
+    }
+    .agent-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+      transition: all 0.2s;
+    }
+    .agent-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
+    .agent-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .agent-avatar {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .agent-info { flex: 1; min-width: 0; }
+    .agent-name { font-size: 15px; font-weight: 700; }
+    .agent-role { font-size: 12px; color: var(--t2); }
+    .agent-status {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; padding: 3px 8px;
+      border-radius: 20px;
+    }
+    .status-active { background: var(--green-dim); color: var(--green); }
+    .status-idle   { background: var(--amber-dim); color: var(--amber); }
+    .status-offline{ background: var(--red-dim);   color: var(--red);   }
+
+    .agent-activity {
+      font-size: 13px; color: var(--t2); margin-bottom: 14px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .agent-meta {
+      display: flex; gap: 16px; font-size: 12px; color: var(--t3);
+    }
+    .agent-meta strong { color: var(--t1); font-size: 14px; font-weight: 700; }
+
+    .uptime-bar {
+      height: 3px; border-radius: 4px; background: var(--card-alt);
+      margin-top: 12px; overflow: hidden;
+    }
+    .uptime-fill { height: 100%; background: var(--green); border-radius: 4px; }
+
+    /* ─── ACTIVITY FEED ─── */
+    .activity-feed { display: flex; flex-direction: column; gap: 0; }
+    .activity-item {
+      display: flex; gap: 12px; padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      margin-top: 6px; flex-shrink: 0;
+    }
+    .activity-content { flex: 1; min-width: 0; }
+    .activity-text { font-size: 13px; }
+    .activity-time { font-size: 11px; color: var(--t3); margin-top: 2px; }
+
+    /* ─── TASKS ─── */
+    .task-filters {
+      display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--border); background: var(--card);
+      color: var(--t2); transition: all 0.15s; font-family: inherit;
+    }
+    .filter-btn:hover { background: var(--card-alt); color: var(--t1); }
+    .filter-btn.active { background: var(--accent-glow); color: var(--accent-hi); border-color: rgba(99,102,241,0.3); }
+
+    .task-table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left; padding: 10px 14px;
+      font-size: 11px; font-weight: 600; color: var(--t3);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    tbody td { padding: 12px 14px; font-size: 13px; vertical-align: middle; }
+
+    .priority-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+    }
+    .priority-high   { background: var(--red-dim);   color: var(--red);   }
+    .priority-medium { background: var(--amber-dim); color: var(--amber); }
+    .priority-low    { background: var(--blue-dim);  color: var(--blue);  }
+
+    .task-progress-bar { height: 4px; border-radius: 4px; background: var(--card-alt); width: 80px; overflow: hidden; }
+    .task-progress-fill { height: 100%; border-radius: 4px; background: var(--accent); }
+
+    /* ─── CRON JOBS ─── */
+    .cron-grid {
+      display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;
+    }
+    .cron-item {
+      display: flex; align-items: center; gap: 16px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px;
+      transition: all 0.2s;
+    }
+    .cron-item:hover { border-color: var(--border-hi); }
+    .cron-status-icon { font-size: 20px; flex-shrink: 0; }
+    .cron-info { flex: 1; min-width: 0; }
+    .cron-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .cron-schedule { font-size: 12px; color: var(--t3); font-family: 'SF Mono', 'Fira Mono', monospace; }
+    .cron-meta { display: flex; gap: 20px; margin-left: auto; text-align: right; }
+    .cron-meta-item { display: flex; flex-direction: column; }
+    .cron-meta-label { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: 0.5px; }
+    .cron-meta-value { font-size: 13px; font-weight: 600; margin-top: 2px; }
+    .cron-enabled  { border-left: 3px solid var(--green); }
+    .cron-disabled { border-left: 3px solid var(--t3); opacity: 0.6; }
+    .cron-error    { border-left: 3px solid var(--red); }
+
+    .countdown { font-size: 12px; font-weight: 700; color: var(--accent-hi); font-variant-numeric: tabular-nums; }
+
+    /* ─── TIMELINE ─── */
+    .timeline-bar {
+      display: flex; gap: 2px; height: 32px; align-items: center; border-radius: 8px; overflow: hidden;
+      background: var(--card-alt); margin-top: 20px;
+    }
+    .timeline-slot {
+      flex: 1; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: var(--t3);
+      transition: opacity 0.2s;
+      position: relative;
+    }
+    .timeline-slot.active { background: var(--accent); color: white; }
+    .timeline-slot.run    { background: var(--green); }
+    .timeline-slot.upcoming { background: rgba(99,102,241,0.3); }
+
+    /* ─── TODO LIST ─── */
+    .todo-add-form {
+      display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .todo-add-form input, .todo-add-form select {
+      flex: 1; min-width: 160px;
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--t1); padding: 9px 14px; border-radius: var(--radius-sm);
+      font-size: 13px; font-family: inherit; outline: none;
+      transition: border-color 0.15s;
+    }
+    .todo-add-form input:focus, .todo-add-form select:focus { border-color: var(--accent); }
+    .todo-add-form select option { background: var(--card); }
+
+    .todo-list { display: flex; flex-direction: column; gap: 8px; }
+    .todo-item {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 16px;
+      transition: all 0.2s;
+    }
+    .todo-item:hover { border-color: var(--border-hi); }
+    .todo-item.done { opacity: 0.5; }
+    .todo-checkbox {
+      width: 18px; height: 18px; border-radius: 5px;
+      border: 2px solid var(--border-hi); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .todo-checkbox:hover { border-color: var(--accent); }
+    .todo-checkbox.checked { background: var(--accent); border-color: var(--accent); }
+    .todo-checkbox.checked::after { content: '✓'; color: white; font-size: 11px; font-weight: 700; }
+    .todo-text { flex: 1; font-size: 13px; }
+    .todo-item.done .todo-text { text-decoration: line-through; color: var(--t3); }
+    .todo-assignee {
+      font-size: 11px; color: var(--t3);
+      background: var(--card-alt); padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .todo-del {
+      width: 24px; height: 24px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--t3); font-size: 16px;
+      transition: all 0.15s; border: none; background: transparent;
+    }
+    .todo-del:hover { background: var(--red-dim); color: var(--red); }
+
+    /* ─── MODAL ─── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 100;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--card); border: 1px solid var(--border-hi);
+      border-radius: var(--radius); padding: 28px; width: 480px;
+      max-width: calc(100vw - 40px);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--t2); margin-bottom: 6px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      color: var(--t1); padding: 10px 14px; border-radius: var(--radius-sm);
+      font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.15s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+    .form-select option, .form-textarea { resize: vertical; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+    /* ─── TAGS/CHIPS ─── */
+    .chip {
+      display: inline-block; padding: 2px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+    .chip-green  { background: var(--green-dim); color: var(--green); }
+    .chip-amber  { background: var(--amber-dim); color: var(--amber); }
+    .chip-red    { background: var(--red-dim);   color: var(--red);   }
+    .chip-blue   { background: var(--blue-dim);  color: var(--blue);  }
+    .chip-purple { background: rgba(168,85,247,0.15); color: var(--purple); }
+
+    /* ─── DIVIDER ─── */
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      text-align: center; padding: 48px; color: var(--t3);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-text { font-size: 14px; }
+
+    /* ─── RING GAUGE (SVG) ─── */
+    .ring-container { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .ring-label {
+      position: absolute; text-align: center;
+      font-size: 20px; font-weight: 800; letter-spacing: -0.5px;
+    }
+    .ring-sub { font-size: 11px; color: var(--t2); font-weight: 400; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .sidebar { width: 60px; min-width: 60px; }
+      .sidebar-logo .logo-text, .sidebar-logo .logo-sub, .nav-label, .nav-item span:not(.nav-icon) { display: none; }
+      .nav-item { justify-content: center; }
+      .content { padding: 16px; }
+      .topbar { padding: 14px 16px; }
+    }
+
+    /* ─── MISC ─── */
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .ml-auto { margin-left: auto; }
+    .text-green { color: var(--green); }
+    .text-amber { color: var(--amber); }
+    .text-red { color: var(--red); }
+    .text-blue { color: var(--blue); }
+    .text-accent { color: var(--accent-hi); }
+    .text-muted { color: var(--t3); }
+    .fw-700 { font-weight: 700; }
+    .fs-12 { font-size: 12px; }
+    .fs-13 { font-size: 13px; }
+    .mb-0 { margin-bottom: 0; }
+    .mb-4 { margin-bottom: 4px; }
+    .mb-12 { margin-bottom: 12px; }
+    .mb-16 { margin-bottom: 16px; }
+    .mb-20 { margin-bottom: 20px; }
+    .mt-4 { margin-top: 4px; }
+  </style>
+</head>
+
+<body>
+
+<!-- ═══════════════════════════ SIDEBAR ═══════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🛸</div>
+    <div>
+      <div class="logo-text">Mission Control</div>
+      <div class="logo-sub">MetaVision HQ</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Monitoring</div>
+    <div class="nav-item active" onclick="showSection('usage')" data-section="usage">
+      <span class="nav-icon">📊</span> <span>API Usage</span>
+    </div>
+    <div class="nav-item" onclick="showSection('agents')" data-section="agents">
+      <span class="nav-icon">🤖</span> <span>Agents</span>
+    </div>
+    <div class="nav-item" onclick="showSection('cron')" data-section="cron">
+      <span class="nav-icon">⏱️</span> <span>Cron Jobs</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Planning</div>
+    <div class="nav-item" onclick="showSection('tasks')" data-section="tasks">
+      <span class="nav-icon">📋</span> <span>Task Tracker</span>
+      <span class="nav-badge" id="tasks-badge">0</span>
+    </div>
+    <div class="nav-item" onclick="showSection('todos')" data-section="todos">
+      <span class="nav-icon">✅</span> <span>To-Do List</span>
+      <span class="nav-badge" id="todos-badge">0</span>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sys-status">
+      <div class="pulse-dot"></div>
+      <span>All systems operational</span>
+    </div>
+    <div style="font-size:11px; color:var(--t3); margin-top:6px;" id="sidebar-time"></div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════ MAIN ═══════════════════════════ -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2 id="topbar-title">Claude API Usage</h2>
+      <p id="topbar-sub">Real-time monitoring · MetaVision Agent Network</p>
+    </div>
+    <div class="topbar-right">
+      <div style="font-size:12px; color:var(--t2);" id="topbar-time"></div>
+      <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻ Refresh</button>
+      <button class="btn btn-primary btn-sm" id="topbar-action" onclick="topbarAction()">+ Add Task</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════ SECTION: API USAGE ══════════ -->
+    <div class="section active" id="section-usage">
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-label">Requests This Month</div>
+          <div class="stat-value" id="stat-req">4,521</div>
+          <div class="stat-sub">of 50,000 limit</div>
         </div>
-        <div class="refresh-btn" onclick="refreshAll()">🔄 Refresh</div>
-      </header>
-
-      <div class="grid">
-        <!-- Claude API Usage Monitor -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="emoji">📊</span>
-              <div>
-                <div>Claude API Usage</div>
-                <div class="card-subtitle">Monthly quota tracking</div>
-              </div>
-            </div>
-          </div>
-          <div id="usage-content" style="min-height: 200px">
-            <div class="empty-state">Loading usage data...</div>
-          </div>
+        <div class="stat-card">
+          <div class="stat-icon">💬</div>
+          <div class="stat-label">Input Tokens</div>
+          <div class="stat-value" id="stat-in">2.86M</div>
+          <div class="stat-sub">this month</div>
         </div>
-
-        <!-- Agent Status Board -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="emoji">👥</span>
-              <div>
-                <div>Agent Status Board</div>
-                <div class="card-subtitle">Real-time activity</div>
-              </div>
-            </div>
-          </div>
-          <div id="agents-content" style="min-height: 200px">
-            <div class="empty-state">Loading agent status...</div>
-          </div>
+        <div class="stat-card">
+          <div class="stat-icon">✨</div>
+          <div class="stat-label">Output Tokens</div>
+          <div class="stat-value" id="stat-out">1.23M</div>
+          <div class="stat-sub">this month</div>
         </div>
-
-        <!-- Cron Jobs Monitor -->
-        <div class="card grid-full">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="emoji">⏱️</span>
-              <div>
-                <div>Cron Jobs Monitor</div>
-                <div class="card-subtitle">Scheduled automations</div>
-              </div>
-            </div>
-          </div>
-          <div id="cron-content" style="min-height: 200px">
-            <div class="empty-state">Loading cron jobs...</div>
-          </div>
-        </div>
-
-        <!-- Task Tracker -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="emoji">✅</span>
-              <div>
-                <div>Task Tracker</div>
-                <div class="card-subtitle">Agent assignments</div>
-              </div>
-            </div>
-            <button class="btn btn-primary btn-small" onclick="openTaskModal()">
-              + New Task
-            </button>
-          </div>
-          <div id="tasks-content" style="min-height: 200px">
-            <div class="empty-state">No tasks yet. Create one to get started.</div>
-          </div>
-        </div>
-
-        <!-- To-Do & Assignment System -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <span class="emoji">📝</span>
-              <div>
-                <div>To-Do List</div>
-                <div class="card-subtitle">Quick assignments</div>
-              </div>
-            </div>
-            <button class="btn btn-primary btn-small" onclick="openTodoModal()">
-              + New To-Do
-            </button>
-          </div>
-          <div id="todos-content" style="min-height: 200px">
-            <div class="empty-state">No to-dos yet. Add one to get started.</div>
-          </div>
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-label">Resets In</div>
+          <div class="stat-value" id="stat-reset">26d</div>
+          <div class="stat-sub">quota reset</div>
         </div>
       </div>
-    </div>
 
-    <!-- Task Modal -->
-    <div class="modal" id="taskModal">
-      <div class="modal-content">
-        <div class="modal-header">Create New Task</div>
-        <form onsubmit="saveTask(event)">
-          <div class="form-group">
-            <label for="taskTitle">Task Title</label>
-            <input
-              type="text"
-              id="taskTitle"
-              required
-              placeholder="e.g., Build dashboard component"
-            />
+      <div class="grid-2">
+        <!-- Quota gauges -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Quota Usage</span>
+            <span class="chip chip-green">Healthy</span>
           </div>
-          <div class="form-group">
-            <label for="taskDesc">Description</label>
-            <textarea
-              id="taskDesc"
-              placeholder="Task details..."
-              rows="3"
-            ></textarea>
-          </div>
-          <div class="form-group">
-            <label for="taskAssigned">Assign To</label>
-            <select id="taskAssigned" required>
-              <option value="">Select agent</option>
-              <option value="Metabot">Metabot 🤖</option>
-              <option value="Bobby">Bobby 🛠</option>
-              <option value="Monty">Monty 🔬</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="taskPriority">Priority</label>
-            <select id="taskPriority">
-              <option value="low">Low</option>
-              <option value="medium" selected>Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="taskDue">Due Date</label>
-            <input type="date" id="taskDue" />
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeTaskModal()">
-              Cancel
-            </button>
-            <button type="submit" class="btn btn-primary">Create Task</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- To-Do Modal -->
-    <div class="modal" id="todoModal">
-      <div class="modal-content">
-        <div class="modal-header">Create New To-Do</div>
-        <form onsubmit="saveTodo(event)">
-          <div class="form-group">
-            <label for="todoTitle">To-Do Title</label>
-            <input
-              type="text"
-              id="todoTitle"
-              required
-              placeholder="e.g., Review code PR"
-            />
-          </div>
-          <div class="form-group">
-            <label for="todoAssigned">Assign To</label>
-            <select id="todoAssigned" required>
-              <option value="">Select agent</option>
-              <option value="Metabot">Metabot 🤖</option>
-              <option value="Bobby">Bobby 🛠</option>
-              <option value="Monty">Monty 🔬</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="todoPriority">Priority</label>
-            <select id="todoPriority">
-              <option value="low">Low</option>
-              <option value="medium" selected>Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeTodoModal()">
-              Cancel
-            </button>
-            <button type="submit" class="btn btn-primary">Create To-Do</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <script>
-      // API Base URL
-      const API_URL = 'http://localhost:3000/api';
-
-      // Initialize dashboard
-      async function init() {
-        await Promise.all([
-          loadUsage(),
-          loadAgents(),
-          loadCrons(),
-          loadTasks(),
-          loadTodos(),
-        ]);
-        setInterval(refreshAll, 30000); // Refresh every 30 seconds
-      }
-
-      // Usage Monitor
-      async function loadUsage() {
-        try {
-          const response = await fetch(`${API_URL}/usage`);
-          const data = await response.json();
-          renderUsage(data);
-        } catch (error) {
-          console.error('Failed to load usage:', error);
-          document.getElementById('usage-content').innerHTML =
-            '<div class="empty-state">Error loading usage data</div>';
-        }
-      }
-
-      function renderUsage(data) {
-        const { tokens, requests, resetDate } = data;
-        const html = `
-          <div class="usage-grid">
-            <div class="usage-item">
-              <div class="usage-label">📤 Input Tokens</div>
-              <div class="usage-value">${(tokens.input / 1000000).toFixed(2)}M</div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 45%"></div>
-              </div>
-            </div>
-            <div class="usage-item">
-              <div class="usage-label">📥 Output Tokens</div>
-              <div class="usage-value">${(tokens.output / 1000000).toFixed(2)}M</div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 25%"></div>
-              </div>
-            </div>
-            <div class="usage-item">
-              <div class="usage-label">📊 Requests</div>
-              <div class="usage-value">${requests.thisMonth.toLocaleString()}</div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: ${requests.percentage}%"></div>
-              </div>
-              <div class="usage-percent">${requests.percentage.toFixed(1)}% of ${requests.limit.toLocaleString()}</div>
-            </div>
-            <div class="usage-item">
-              <div class="usage-label">⏰ Reset Date</div>
-              <div class="usage-value" style="font-size: 16px">${resetDate}</div>
-              <div class="usage-percent">Next month quota available</div>
-            </div>
-          </div>
-        `;
-        document.getElementById('usage-content').innerHTML = html;
-      }
-
-      // Agent Status
-      async function loadAgents() {
-        try {
-          const response = await fetch(`${API_URL}/agents`);
-          const agents = await response.json();
-          renderAgents(agents);
-        } catch (error) {
-          console.error('Failed to load agents:', error);
-          document.getElementById('agents-content').innerHTML =
-            '<div class="empty-state">Error loading agent status</div>';
-        }
-      }
-
-      function renderAgents(agents) {
-        const html = agents
-          .map(
-            (agent) => `
-          <div class="agent-item">
-            <div class="agent-avatar">${agent.emoji}</div>
-            <div class="agent-info">
-              <div class="agent-name">${agent.name}</div>
-              <div class="agent-activity">${agent.activity}</div>
-              <div class="agent-status status-${agent.status}">
-                ${agent.status.toUpperCase()} • ${agent.currentTask}
-              </div>
-              <div class="uptime">Uptime: ${agent.uptimePercent}%</div>
-            </div>
-          </div>
-        `
-          )
-          .join('');
-        document.getElementById('agents-content').innerHTML = html;
-      }
-
-      // Cron Jobs
-      async function loadCrons() {
-        try {
-          const response = await fetch(`${API_URL}/cron`);
-          const crons = await response.json();
-          renderCrons(crons);
-        } catch (error) {
-          console.error('Failed to load crons:', error);
-          document.getElementById('cron-content').innerHTML =
-            '<div class="empty-state">Error loading cron jobs</div>';
-        }
-      }
-
-      function renderCrons(crons) {
-        if (crons.length === 0) {
-          document.getElementById('cron-content').innerHTML =
-            '<div class="empty-state">No cron jobs configured</div>';
-          return;
-        }
-
-        const html = crons
-          .map(
-            (cron) => `
-          <div class="cron-item">
-            <div class="cron-header">
-              <div class="cron-name">${cron.name}</div>
-              <div class="cron-status status-${cron.lastStatus}">
-                ${cron.lastStatus.toUpperCase()}
-              </div>
-            </div>
-            <div class="cron-details">
-              <div class="cron-detail">
-                <strong>Schedule:</strong> ${cron.schedule}
-              </div>
-              <div class="cron-detail">
-                <strong>Next Run:</strong> ${new Date(cron.nextRun).toLocaleString()}
-              </div>
-              <div class="cron-detail">
-                <strong>Last Run:</strong> ${new Date(cron.lastRun).toLocaleString()}
-              </div>
-              <div class="cron-detail">
-                <strong>Duration:</strong> ${cron.lastDuration}ms
-              </div>
-            </div>
-          </div>
-        `
-          )
-          .join('');
-        document.getElementById('cron-content').innerHTML = html;
-      }
-
-      // Tasks
-      async function loadTasks() {
-        try {
-          const response = await fetch(`${API_URL}/tasks`);
-          const tasks = await response.json();
-          renderTasks(tasks);
-        } catch (error) {
-          console.error('Failed to load tasks:', error);
-          document.getElementById('tasks-content').innerHTML =
-            '<div class="empty-state">Error loading tasks</div>';
-        }
-      }
-
-      function renderTasks(tasks) {
-        if (tasks.length === 0) {
-          document.getElementById('tasks-content').innerHTML =
-            '<div class="empty-state">No tasks yet. Create one to get started.</div>';
-          return;
-        }
-
-        const html = tasks
-          .map(
-            (task) => `
-          <div class="task-item">
-            <div class="task-header">
-              <div class="task-title">${task.title}</div>
-              <div class="task-priority priority-${task.priority}">
-                ${task.priority.toUpperCase()}
-              </div>
-            </div>
-            <div class="task-assigned">Assigned to: <strong>${task.assignedTo}</strong></div>
-            <div class="task-progress">
+          <div class="card-body">
+            <div class="progress-wrap">
               <div class="progress-label">
-                <span>Progress</span>
-                <span>${task.progress}%</span>
+                <span>API Requests</span>
+                <span>4,521 / 50,000 (9%)</span>
               </div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: ${task.progress}%"></div>
-              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:9%"></div></div>
             </div>
-            <div style="display: flex; gap: 8px; margin-top: 8px;">
-              <button class="btn btn-small btn-secondary" onclick="updateTaskProgress('${task.id}')">
-                Update Progress
-              </button>
-              <button class="btn btn-small btn-danger" onclick="deleteTask('${task.id}')">
-                Delete
-              </button>
+            <div class="progress-wrap">
+              <div class="progress-label">
+                <span>Input Tokens</span>
+                <span>2.86M / 10M (28.6%)</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill green" style="width:28.6%"></div></div>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-label">
+                <span>Output Tokens</span>
+                <span>1.23M / 5M (24.7%)</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:24.7%"></div></div>
+            </div>
+            <div class="progress-wrap mb-0">
+              <div class="progress-label">
+                <span>Cost Estimate</span>
+                <span>$18.40 / $100 budget</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill amber" style="width:18.4%"></div></div>
             </div>
           </div>
-        `
-          )
-          .join('');
-        document.getElementById('tasks-content').innerHTML = html;
-      }
+        </div>
 
-      // To-Dos
-      async function loadTodos() {
-        try {
-          const response = await fetch(`${API_URL}/todos`);
-          const todos = await response.json();
-          renderTodos(todos);
-        } catch (error) {
-          console.error('Failed to load todos:', error);
-          document.getElementById('todos-content').innerHTML =
-            '<div class="empty-state">Error loading to-dos</div>';
-        }
-      }
-
-      function renderTodos(todos) {
-        if (todos.length === 0) {
-          document.getElementById('todos-content').innerHTML =
-            '<div class="empty-state">No to-dos yet. Add one to get started.</div>';
-          return;
-        }
-
-        const html = todos
-          .map(
-            (todo) => `
-          <div class="todo-item ${todo.completed ? 'completed' : ''}">
-            <input
-              type="checkbox"
-              class="todo-checkbox"
-              ${todo.completed ? 'checked' : ''}
-              onchange="toggleTodo('${todo.id}', this.checked)"
-            />
-            <div class="todo-text">${todo.title}</div>
-            <div class="todo-assigned">${todo.assignedTo}</div>
-            <button class="btn btn-small btn-danger" onclick="deleteTodo('${todo.id}')">
-              ×
-            </button>
+        <!-- Daily requests chart -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Daily Requests (Last 14 Days)</span>
           </div>
-        `
-          )
-          .join('');
-        document.getElementById('todos-content').innerHTML = html;
+          <div class="card-body">
+            <div class="chart-wrap">
+              <canvas id="requestsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Token breakdown -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Token Distribution</span>
+          </div>
+          <div class="card-body" style="display:flex; align-items:center; gap:24px;">
+            <div style="width:140px; flex-shrink:0;">
+              <canvas id="tokenPieChart"></canvas>
+            </div>
+            <div style="flex:1;">
+              <div class="flex items-center gap-8 mb-12">
+                <div style="width:10px;height:10px;border-radius:3px;background:var(--accent);flex-shrink:0;"></div>
+                <div>
+                  <div style="font-size:13px;font-weight:600;">Input Tokens</div>
+                  <div style="font-size:12px;color:var(--t3);">2,856,234 tokens</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-8 mb-12">
+                <div style="width:10px;height:10px;border-radius:3px;background:var(--blue);flex-shrink:0;"></div>
+                <div>
+                  <div style="font-size:13px;font-weight:600;">Output Tokens</div>
+                  <div style="font-size:12px;color:var(--t3);">1,234,567 tokens</div>
+                </div>
+              </div>
+              <div class="divider" style="margin:12px 0;"></div>
+              <div style="font-size:12px; color:var(--t2);">Model: claude-sonnet-4-6</div>
+              <div style="font-size:12px; color:var(--t2); margin-top:4px;">Avg cost: $0.41/day</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hourly heatmap -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Activity by Model</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-wrap">
+              <canvas id="modelChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /section-usage -->
+
+    <!-- ══════════ SECTION: AGENTS ══════════ -->
+    <div class="section" id="section-agents">
+
+      <div class="agent-grid" id="agent-grid">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Recent Activity</span>
+          </div>
+          <div class="card-body">
+            <div class="activity-feed" id="activity-feed"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Uptime Summary</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-wrap">
+              <canvas id="uptimeChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /section-agents -->
+
+    <!-- ══════════ SECTION: TASKS ══════════ -->
+    <div class="section" id="section-tasks">
+
+      <div class="task-filters">
+        <button class="filter-btn active" onclick="filterTasks('all', this)">All</button>
+        <button class="filter-btn" onclick="filterTasks('in-progress', this)">In Progress</button>
+        <button class="filter-btn" onclick="filterTasks('pending', this)">Pending</button>
+        <button class="filter-btn" onclick="filterTasks('done', this)">Done</button>
+        <button class="filter-btn" onclick="filterTasks('high', this)">🔴 High</button>
+        <button class="filter-btn" onclick="filterTasks('medium', this)">🟡 Medium</button>
+        <button class="filter-btn" onclick="filterTasks('low', this)">🔵 Low</button>
+        <button class="btn btn-primary btn-sm ml-auto" onclick="openTaskModal()">+ New Task</button>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div class="task-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Task</th>
+                  <th>Assigned To</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Progress</th>
+                  <th>Due</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="task-tbody">
+                <!-- populated by JS -->
+              </tbody>
+            </table>
+          </div>
+          <div id="tasks-empty" class="empty-state" style="display:none;">
+            <div class="empty-icon">📋</div>
+            <div class="empty-text">No tasks yet. Add one above!</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /section-tasks -->
+
+    <!-- ══════════ SECTION: CRON JOBS ══════════ -->
+    <div class="section" id="section-cron">
+
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">Active Jobs</div>
+          <div class="stat-value text-green" id="cron-active-count">0</div>
+          <div class="stat-sub">running normally</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏸️</div>
+          <div class="stat-label">Disabled</div>
+          <div class="stat-value text-muted" id="cron-disabled-count">0</div>
+          <div class="stat-sub">paused</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-label">With Errors</div>
+          <div class="stat-value text-amber" id="cron-error-count">0</div>
+          <div class="stat-sub">need attention</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔄</div>
+          <div class="stat-label">Next Run</div>
+          <div class="stat-value text-accent fs-13 fw-700" id="cron-next-run">–</div>
+          <div class="stat-sub">upcoming job</div>
+        </div>
+      </div>
+
+      <div class="cron-grid" id="cron-grid">
+        <!-- populated by JS -->
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">24-Hour Activity Timeline</span>
+          <span class="fs-12 text-muted">Today's job runs</span>
+        </div>
+        <div class="card-body">
+          <div class="timeline-bar" id="timeline-bar">
+            <!-- populated by JS -->
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:6px;">
+            <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /section-cron -->
+
+    <!-- ══════════ SECTION: TO-DOS ══════════ -->
+    <div class="section" id="section-todos">
+
+      <div class="card mb-20">
+        <div class="card-header">
+          <span class="card-title">Add To-Do</span>
+        </div>
+        <div class="card-body">
+          <div class="todo-add-form">
+            <input type="text" id="todo-input" placeholder="What needs to be done?" onkeydown="if(event.key==='Enter')addTodo()" />
+            <select id="todo-assignee">
+              <option value="">Unassigned</option>
+              <option value="Louis">Louis</option>
+              <option value="Jo">Jo</option>
+              <option value="Noah">Noah</option>
+              <option value="Metabot">🤖 Metabot</option>
+              <option value="Bobby">🛠 Bobby</option>
+              <option value="Monty">🔬 Monty</option>
+            </select>
+            <select id="todo-priority">
+              <option value="medium">Medium Priority</option>
+              <option value="high">High Priority</option>
+              <option value="low">Low Priority</option>
+            </select>
+            <button class="btn btn-primary" onclick="addTodo()">+ Add</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Pending</span>
+            <span class="chip chip-amber" id="pending-count">0 items</span>
+          </div>
+          <div class="card-body">
+            <div class="todo-list" id="todo-pending"></div>
+            <div id="todo-pending-empty" class="empty-state" style="display:none;">
+              <div class="empty-icon">🎉</div>
+              <div class="empty-text">All clear!</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Completed</span>
+            <span class="chip chip-green" id="done-count">0 items</span>
+          </div>
+          <div class="card-body">
+            <div class="todo-list" id="todo-done"></div>
+            <div id="todo-done-empty" class="empty-state" style="display:none;">
+              <div class="empty-icon">📝</div>
+              <div class="empty-text">Nothing done yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /section-todos -->
+
+  </div><!-- /content -->
+</main>
+
+<!-- ═══════════════════════════ TASK MODAL ═══════════════════════════ -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <div class="modal-title">New Task</div>
+    <div class="form-group">
+      <label class="form-label">Task Title *</label>
+      <input type="text" class="form-input" id="modal-task-title" placeholder="e.g. Build portfolio tracker" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-textarea" id="modal-task-desc" rows="2" placeholder="Brief description..."></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Assigned To</label>
+        <select class="form-select" id="modal-task-assignee">
+          <option value="Louis">Louis</option>
+          <option value="Jo">Jo</option>
+          <option value="Noah">Noah</option>
+          <option value="Metabot">🤖 Metabot</option>
+          <option value="Bobby">🛠 Bobby</option>
+          <option value="Monty">🔬 Monty</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="form-select" id="modal-task-priority">
+          <option value="high">🔴 High</option>
+          <option value="medium" selected>🟡 Medium</option>
+          <option value="low">🔵 Low</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Due Date</label>
+        <input type="date" class="form-input" id="modal-task-due" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="modal-task-status">
+          <option value="in-progress">In Progress</option>
+          <option value="pending">Pending</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeTaskModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()">Create Task</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  DATA & STATE
+// ═══════════════════════════════════════════════════════
+
+const AGENTS_DATA = [
+  {
+    id: 'metabot', name: 'Metabot', emoji: '🤖',
+    role: 'Main Coordinator',
+    status: 'active',
+    activity: 'Handling daily operations & routing',
+    task: 'Processing group chat messages',
+    uptime: 99.8,
+    lastSeen: 2,
+    bg: 'rgba(99,102,241,0.15)', color: 'var(--accent)'
+  },
+  {
+    id: 'bobby', name: 'Bobby', emoji: '🛠',
+    role: 'The Builder',
+    status: 'active',
+    activity: 'Building Mission Control Dashboard',
+    task: 'Dashboard development & deployment',
+    uptime: 98.5,
+    lastSeen: 0,
+    bg: 'rgba(34,197,94,0.15)', color: 'var(--green)'
+  },
+  {
+    id: 'monty', name: 'Monty', emoji: '🔬',
+    role: 'The Analyst',
+    status: 'idle',
+    activity: 'Awaiting research assignments',
+    task: 'Standing by for deep analysis requests',
+    uptime: 97.2,
+    lastSeen: 240,
+    bg: 'rgba(168,85,247,0.15)', color: 'var(--purple)'
+  }
+];
+
+const ACTIVITY_DATA = [
+  { emoji: '🤖', text: 'Metabot processed 12 group messages', time: '2 mins ago', color: 'var(--accent)' },
+  { emoji: '🛠', text: 'Bobby deployed Mission Control Dashboard v2', time: '18 mins ago', color: 'var(--green)' },
+  { emoji: '🤖', text: 'Metabot routed task to Bobby: rebuild dashboard', time: '1 hr ago', color: 'var(--accent)' },
+  { emoji: '🔬', text: 'Monty completed crypto market analysis', time: '4 hrs ago', color: 'var(--purple)' },
+  { emoji: '🤖', text: 'Metabot sent morning briefing', time: '8 hrs ago', color: 'var(--accent)' },
+  { emoji: '🛠', text: 'Bobby updated n8n workflows', time: 'Yesterday', color: 'var(--green)' },
+];
+
+const CRON_DATA = [
+  {
+    id: 'heartbeat',
+    name: 'Heartbeat Monitor',
+    schedule: 'every 30 minutes',
+    cron: '*/30 * * * *',
+    enabled: true,
+    lastStatus: 'ok',
+    lastRun: 18,
+    nextRun: 12,
+    duration: 340,
+    errors: 0,
+    icon: '💓'
+  },
+  {
+    id: 'market-briefing',
+    name: 'Market Morning Briefing',
+    schedule: 'Daily at 08:00',
+    cron: '0 8 * * *',
+    enabled: true,
+    lastStatus: 'ok',
+    lastRun: 480,
+    nextRun: 960,
+    duration: 8200,
+    errors: 0,
+    icon: '📈'
+  },
+  {
+    id: 'stock-scout',
+    name: 'Oversold Stock Scout',
+    schedule: 'Daily at 09:30',
+    cron: '30 9 * * *',
+    enabled: true,
+    lastStatus: 'ok',
+    lastRun: 390,
+    nextRun: 1050,
+    duration: 45000,
+    errors: 0,
+    icon: '🔍'
+  },
+  {
+    id: 'tiktok-scrape',
+    name: 'TikTok Trend Scraper',
+    schedule: 'Every 6 hours',
+    cron: '0 */6 * * *',
+    enabled: true,
+    lastStatus: 'warning',
+    lastRun: 180,
+    nextRun: 180,
+    duration: 95000,
+    errors: 1,
+    icon: '📱'
+  },
+  {
+    id: 'memory-distill',
+    name: 'Memory Distillation',
+    schedule: 'Daily at 23:00',
+    cron: '0 23 * * *',
+    enabled: false,
+    lastStatus: 'disabled',
+    lastRun: 1440,
+    nextRun: null,
+    duration: 12000,
+    errors: 0,
+    icon: '🧠'
+  }
+];
+
+// ─── STORAGE ───
+function loadStorage(key, def) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
+}
+function saveStorage(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+
+let tasks = loadStorage('mc_tasks', [
+  { id: '1', title: 'Rebuild Mission Control Dashboard', description: 'New design with dark mode, charts, and proper Vercel deployment', assignedTo: 'Bobby', priority: 'high', status: 'in-progress', progress: 90, due: '2026-03-05', created: '2026-03-04' },
+  { id: '2', title: 'Setup Oversold Stock Scout n8n Workflow', description: 'Gemini 2.5 Flash + Supabase integration', assignedTo: 'Bobby', priority: 'high', status: 'done', progress: 100, due: '2026-03-03', created: '2026-03-02' },
+  { id: '3', title: 'FibreGuard TikTok trend analysis', description: 'Weekly viral content research for FibreGuard brand', assignedTo: 'Monty', priority: 'medium', status: 'pending', progress: 0, due: '2026-03-07', created: '2026-03-04' },
+  { id: '4', title: 'MetaVision crypto portfolio review', description: 'Q1 performance analysis and rebalancing strategy', assignedTo: 'Louis', priority: 'medium', status: 'in-progress', progress: 40, due: '2026-03-10', created: '2026-03-01' },
+]);
+
+let todos = loadStorage('mc_todos', [
+  { id: '1', title: 'Review Polymarket predictions for this week', assignedTo: 'Louis', priority: 'high', completed: false, created: Date.now() - 3600000 },
+  { id: '2', title: 'Test TikTok scraper with new endpoint', assignedTo: 'Bobby', priority: 'medium', completed: false, created: Date.now() - 7200000 },
+  { id: '3', title: 'Distill last week\'s memory files', assignedTo: 'Metabot', priority: 'low', completed: true, created: Date.now() - 86400000 },
+]);
+
+let taskFilter = 'all';
+
+// ═══════════════════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════════════════
+
+const SECTION_META = {
+  usage:  { title: 'Claude API Usage', sub: 'Real-time quota monitoring · Anthropic API', action: null },
+  agents: { title: 'Agent Status Board', sub: 'Live status · MetaVision agent network', action: null },
+  tasks:  { title: 'Task Tracker', sub: 'Manage and assign work across the team', action: '+ New Task' },
+  cron:   { title: 'Cron Jobs Monitor', sub: 'Scheduled automation · OpenClaw cron', action: null },
+  todos:  { title: 'To-Do List', sub: 'Quick tasks · Assignment system', action: null },
+};
+
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.querySelector(`[data-section="${name}"]`).classList.add('active');
+
+  const m = SECTION_META[name];
+  document.getElementById('topbar-title').textContent = m.title;
+  document.getElementById('topbar-sub').textContent = m.sub;
+  const actionBtn = document.getElementById('topbar-action');
+  if (m.action) { actionBtn.textContent = m.action; actionBtn.style.display = ''; }
+  else { actionBtn.style.display = 'none'; }
+}
+
+function topbarAction() {
+  const active = document.querySelector('.nav-item.active')?.dataset?.section;
+  if (active === 'tasks') openTaskModal();
+}
+
+// ═══════════════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════════════
+
+Chart.defaults.color = '#94A3B8';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size = 11;
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: {
+    backgroundColor: '#1D2130',
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    padding: 10,
+    cornerRadius: 8,
+    titleFont: { weight: '600' }
+  }},
+};
+
+function initCharts() {
+  // Daily requests
+  const days = [];
+  const reqs = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(d.toLocaleDateString('en', { month: 'short', day: 'numeric' }));
+    reqs.push(Math.floor(200 + Math.random() * 500));
+  }
+
+  new Chart(document.getElementById('requestsChart'), {
+    type: 'bar',
+    data: {
+      labels: days,
+      datasets: [{
+        data: reqs,
+        backgroundColor: 'rgba(99,102,241,0.5)',
+        borderColor: '#6366F1',
+        borderWidth: 1,
+        borderRadius: 4,
+        hoverBackgroundColor: 'rgba(129,140,248,0.8)',
+      }]
+    },
+    options: { ...chartDefaults, scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxRotation: 45 } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+    }}
+  });
+
+  // Token pie
+  new Chart(document.getElementById('tokenPieChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Input', 'Output'],
+      datasets: [{
+        data: [2856234, 1234567],
+        backgroundColor: ['#6366F1', '#38BDF8'],
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      cutout: '72%',
+      plugins: { ...chartDefaults.plugins, legend: { display: false } }
+    }
+  });
+
+  // Model usage bar
+  new Chart(document.getElementById('modelChart'), {
+    type: 'bar',
+    data: {
+      labels: ['claude-sonnet-4-6', 'claude-haiku-4-5', 'claude-opus'],
+      datasets: [{
+        label: 'Requests',
+        data: [3824, 612, 85],
+        backgroundColor: ['#6366F1', '#38BDF8', '#A855F7'],
+        borderRadius: 6,
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      indexAxis: 'y',
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true },
+        y: { grid: { display: false } }
       }
+    }
+  });
 
-      // Modal Functions
-      function openTaskModal() {
-        document.getElementById('taskModal').classList.add('active');
-      }
+  // Uptime bar chart
+  new Chart(document.getElementById('uptimeChart'), {
+    type: 'bar',
+    data: {
+      labels: AGENTS_DATA.map(a => a.name),
+      datasets: [{
+        label: 'Uptime %',
+        data: AGENTS_DATA.map(a => a.uptime),
+        backgroundColor: ['rgba(99,102,241,0.7)', 'rgba(34,197,94,0.7)', 'rgba(168,85,247,0.7)'],
+        borderRadius: 6,
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, min: 90, max: 100 }
+      },
+      plugins: { ...chartDefaults.plugins, tooltip: {
+        ...chartDefaults.plugins.tooltip,
+        callbacks: { label: ctx => ` ${ctx.raw}% uptime` }
+      }}
+    }
+  });
+}
 
-      function closeTaskModal() {
-        document.getElementById('taskModal').classList.remove('active');
-        document.getElementById('taskTitle').value = '';
-        document.getElementById('taskDesc').value = '';
-        document.getElementById('taskAssigned').value = '';
-        document.getElementById('taskDue').value = '';
-      }
+// ═══════════════════════════════════════════════════════
+//  AGENTS
+// ═══════════════════════════════════════════════════════
 
-      function openTodoModal() {
-        document.getElementById('todoModal').classList.add('active');
-      }
+function renderAgents() {
+  const grid = document.getElementById('agent-grid');
+  grid.innerHTML = AGENTS_DATA.map(a => {
+    const lastSeenText = a.lastSeen === 0 ? 'Just now' : a.lastSeen < 60 ? `${a.lastSeen}m ago` : `${Math.floor(a.lastSeen/60)}h ago`;
+    return `
+    <div class="agent-card">
+      <div class="agent-card-header">
+        <div class="agent-avatar" style="background:${a.bg};">${a.emoji}</div>
+        <div class="agent-info">
+          <div class="agent-name">${a.name}</div>
+          <div class="agent-role">${a.role}</div>
+        </div>
+        <div class="agent-status status-${a.status}">
+          ${a.status === 'active' ? '● Active' : a.status === 'idle' ? '◉ Idle' : '○ Offline'}
+        </div>
+      </div>
+      <div class="agent-activity">💬 ${a.activity}</div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:14px;">🎯 ${a.task}</div>
+      <div class="agent-meta">
+        <div><strong>${a.uptime}%</strong><br>Uptime</div>
+        <div><strong>${lastSeenText}</strong><br>Last seen</div>
+      </div>
+      <div class="uptime-bar">
+        <div class="uptime-fill" style="width:${a.uptime}%;background:${a.color};"></div>
+      </div>
+    </div>
+    `;
+  }).join('');
 
-      function closeTodoModal() {
-        document.getElementById('todoModal').classList.remove('active');
-        document.getElementById('todoTitle').value = '';
-        document.getElementById('todoAssigned').value = '';
-      }
+  const feed = document.getElementById('activity-feed');
+  feed.innerHTML = ACTIVITY_DATA.map(a => `
+    <div class="activity-item">
+      <div class="activity-dot" style="background:${a.color};box-shadow:0 0 6px ${a.color};"></div>
+      <div class="activity-content">
+        <div class="activity-text">${a.emoji} ${a.text}</div>
+        <div class="activity-time">${a.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
 
-      async function saveTask(event) {
-        event.preventDefault();
-        const task = {
-          title: document.getElementById('taskTitle').value,
-          description: document.getElementById('taskDesc').value,
-          assignedTo: document.getElementById('taskAssigned').value,
-          priority: document.getElementById('taskPriority').value,
-          dueDate: document.getElementById('taskDue').value,
-        };
+// ═══════════════════════════════════════════════════════
+//  CRON JOBS
+// ═══════════════════════════════════════════════════════
 
-        try {
-          const response = await fetch(`${API_URL}/tasks`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(task),
-          });
-          if (response.ok) {
-            closeTaskModal();
-            await loadTasks();
-          }
-        } catch (error) {
-          console.error('Failed to save task:', error);
-        }
-      }
+function renderCron() {
+  const active = CRON_DATA.filter(c => c.enabled && c.errors === 0).length;
+  const disabled = CRON_DATA.filter(c => !c.enabled).length;
+  const errors = CRON_DATA.filter(c => c.errors > 0).length;
+  document.getElementById('cron-active-count').textContent = active;
+  document.getElementById('cron-disabled-count').textContent = disabled;
+  document.getElementById('cron-error-count').textContent = errors;
 
-      async function saveTodo(event) {
-        event.preventDefault();
-        const todo = {
-          title: document.getElementById('todoTitle').value,
-          assignedTo: document.getElementById('todoAssigned').value,
-          priority: document.getElementById('todoPriority').value,
-        };
+  const nextJob = CRON_DATA.filter(c => c.enabled && c.nextRun).sort((a,b) => a.nextRun - b.nextRun)[0];
+  document.getElementById('cron-next-run').textContent = nextJob ? `in ${nextJob.nextRun}m` : '–';
 
-        try {
-          const response = await fetch(`${API_URL}/todos`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(todo),
-          });
-          if (response.ok) {
-            closeTodoModal();
-            await loadTodos();
-          }
-        } catch (error) {
-          console.error('Failed to save todo:', error);
-        }
-      }
+  const grid = document.getElementById('cron-grid');
+  grid.innerHTML = CRON_DATA.map(c => {
+    const stateClass = !c.enabled ? 'cron-disabled' : c.errors > 0 ? 'cron-error' : 'cron-enabled';
+    const lastRunText = c.lastRun < 60 ? `${c.lastRun}m ago` : `${Math.floor(c.lastRun/60)}h ago`;
+    const nextRunText = c.enabled && c.nextRun ? `in ${c.nextRun}m` : '—';
+    const durText = c.duration >= 60000 ? `${Math.floor(c.duration/1000)}s` : `${c.duration}ms`;
+    const statusChip = c.errors > 0
+      ? `<span class="chip chip-amber">⚠️ Warning</span>`
+      : c.enabled
+        ? `<span class="chip chip-green">✅ Healthy</span>`
+        : `<span class="chip">⏸ Disabled</span>`;
 
-      async function deleteTask(id) {
-        if (confirm('Delete this task?')) {
-          try {
-            await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE' });
-            await loadTasks();
-          } catch (error) {
-            console.error('Failed to delete task:', error);
-          }
-        }
-      }
+    return `
+    <div class="cron-item ${stateClass}">
+      <div class="cron-status-icon">${c.icon}</div>
+      <div class="cron-info">
+        <div class="cron-name">${c.name} ${statusChip}</div>
+        <div class="cron-schedule">${c.cron} — ${c.schedule}</div>
+      </div>
+      <div class="cron-meta">
+        <div class="cron-meta-item">
+          <span class="cron-meta-label">Last Run</span>
+          <span class="cron-meta-value">${lastRunText}</span>
+        </div>
+        <div class="cron-meta-item">
+          <span class="cron-meta-label">Next Run</span>
+          <span class="cron-meta-value countdown">${nextRunText}</span>
+        </div>
+        <div class="cron-meta-item">
+          <span class="cron-meta-label">Duration</span>
+          <span class="cron-meta-value">${durText}</span>
+        </div>
+        <div class="cron-meta-item">
+          <span class="cron-meta-label">Errors</span>
+          <span class="cron-meta-value ${c.errors > 0 ? 'text-amber' : 'text-green'}">${c.errors}</span>
+        </div>
+      </div>
+    </div>
+    `;
+  }).join('');
 
-      async function updateTaskProgress(id) {
-        const newProgress = prompt('Enter new progress (0-100):');
-        if (newProgress !== null) {
-          try {
-            await fetch(`${API_URL}/tasks/${id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ progress: parseInt(newProgress) }),
-            });
-            await loadTasks();
-          } catch (error) {
-            console.error('Failed to update task:', error);
-          }
-        }
-      }
+  // Timeline
+  const bar = document.getElementById('timeline-bar');
+  const now = new Date();
+  const nowHour = now.getHours() + now.getMinutes() / 60;
+  bar.innerHTML = Array.from({length: 48}, (_, i) => {
+    const hour = i / 2;
+    const isPast = hour < nowHour;
+    const isCurrent = Math.abs(hour - nowHour) < 0.5;
+    const hasRun = isPast && Math.random() < 0.3;
+    const cls = isCurrent ? 'active' : hasRun ? 'run' : '';
+    return `<div class="timeline-slot ${cls}" title="${Math.floor(hour)}:${i%2===0?'00':'30'}"></div>`;
+  }).join('');
+}
 
-      async function deleteTodo(id) {
-        try {
-          await fetch(`${API_URL}/todos/${id}`, { method: 'DELETE' });
-          await loadTodos();
-        } catch (error) {
-          console.error('Failed to delete todo:', error);
-        }
-      }
+// ═══════════════════════════════════════════════════════
+//  TASKS
+// ═══════════════════════════════════════════════════════
 
-      async function toggleTodo(id, completed) {
-        try {
-          await fetch(`${API_URL}/todos/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ completed }),
-          });
-        } catch (error) {
-          console.error('Failed to toggle todo:', error);
-        }
-      }
+function renderTasks() {
+  const filtered = taskFilter === 'all' ? tasks
+    : ['high','medium','low'].includes(taskFilter)
+      ? tasks.filter(t => t.priority === taskFilter)
+      : tasks.filter(t => t.status === taskFilter);
 
-      async function refreshAll() {
-        await Promise.all([
-          loadUsage(),
-          loadAgents(),
-          loadCrons(),
-          loadTasks(),
-          loadTodos(),
-        ]);
-      }
+  const tbody = document.getElementById('task-tbody');
+  const empty = document.getElementById('tasks-empty');
 
-      // Start the dashboard
-      init();
-    </script>
-  </body>
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = '';
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = filtered.map(t => {
+      const statusChip = {
+        'in-progress': '<span class="chip chip-blue">In Progress</span>',
+        'pending':     '<span class="chip chip-amber">Pending</span>',
+        'done':        '<span class="chip chip-green">Done</span>',
+      }[t.status] || t.status;
+
+      const dueDisplay = t.due
+        ? `<span style="font-size:12px;color:var(--t2);">${t.due}</span>`
+        : '<span style="color:var(--t3)">—</span>';
+
+      return `
+      <tr>
+        <td>
+          <div style="font-weight:600;font-size:13px;">${escHtml(t.title)}</div>
+          ${t.description ? `<div style="font-size:12px;color:var(--t3);margin-top:2px;">${escHtml(t.description.slice(0,60))}${t.description.length>60?'…':''}</div>` : ''}
+        </td>
+        <td style="color:var(--t2);">${escHtml(t.assignedTo || '—')}</td>
+        <td><span class="priority-badge priority-${t.priority}">${t.priority}</span></td>
+        <td>${statusChip}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="task-progress-bar"><div class="task-progress-fill" style="width:${t.progress||0}%;"></div></div>
+            <span style="font-size:12px;color:var(--t2);width:30px;">${t.progress||0}%</span>
+          </div>
+        </td>
+        <td>${dueDisplay}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">✕</button>
+        </td>
+      </tr>
+      `;
+    }).join('');
+  }
+
+  const activeTasks = tasks.filter(t => t.status !== 'done').length;
+  document.getElementById('tasks-badge').textContent = activeTasks;
+}
+
+function filterTasks(f, btn) {
+  taskFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTasks();
+}
+
+function openTaskModal() {
+  document.getElementById('task-modal').classList.add('open');
+  document.getElementById('modal-task-title').focus();
+}
+function closeTaskModal() {
+  document.getElementById('task-modal').classList.remove('open');
+  document.getElementById('modal-task-title').value = '';
+  document.getElementById('modal-task-desc').value = '';
+}
+
+function saveTask() {
+  const title = document.getElementById('modal-task-title').value.trim();
+  if (!title) { document.getElementById('modal-task-title').focus(); return; }
+
+  tasks.push({
+    id: Date.now().toString(),
+    title,
+    description: document.getElementById('modal-task-desc').value.trim(),
+    assignedTo: document.getElementById('modal-task-assignee').value,
+    priority: document.getElementById('modal-task-priority').value,
+    status: document.getElementById('modal-task-status').value,
+    progress: document.getElementById('modal-task-status').value === 'done' ? 100 : 0,
+    due: document.getElementById('modal-task-due').value || null,
+    created: new Date().toISOString().slice(0,10)
+  });
+  saveStorage('mc_tasks', tasks);
+  closeTaskModal();
+  renderTasks();
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  saveStorage('mc_tasks', tasks);
+  renderTasks();
+}
+
+// ═══════════════════════════════════════════════════════
+//  TO-DOS
+// ═══════════════════════════════════════════════════════
+
+function renderTodos() {
+  const pending = todos.filter(t => !t.completed);
+  const done    = todos.filter(t => t.completed);
+
+  document.getElementById('pending-count').textContent = `${pending.length} item${pending.length!==1?'s':''}`;
+  document.getElementById('done-count').textContent    = `${done.length} item${done.length!==1?'s':''}`;
+  document.getElementById('todos-badge').textContent   = pending.length;
+
+  renderTodoList('todo-pending', pending, 'todo-pending-empty');
+  renderTodoList('todo-done', done, 'todo-done-empty');
+}
+
+function renderTodoList(containerId, items, emptyId) {
+  const container = document.getElementById(containerId);
+  const empty = document.getElementById(emptyId);
+  if (items.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+  container.innerHTML = items.map(t => `
+    <div class="todo-item ${t.completed ? 'done' : ''}">
+      <div class="todo-checkbox ${t.completed ? 'checked' : ''}" onclick="toggleTodo('${t.id}')"></div>
+      <div class="todo-text">${escHtml(t.title)}</div>
+      ${t.assignedTo ? `<span class="todo-assignee">${escHtml(t.assignedTo)}</span>` : ''}
+      <span class="priority-badge priority-${t.priority}" style="font-size:10px;">${t.priority}</span>
+      <button class="todo-del" onclick="deleteTodo('${t.id}')">×</button>
+    </div>
+  `).join('');
+}
+
+function addTodo() {
+  const title = document.getElementById('todo-input').value.trim();
+  if (!title) return;
+  todos.unshift({
+    id: Date.now().toString(),
+    title,
+    assignedTo: document.getElementById('todo-assignee').value,
+    priority: document.getElementById('todo-priority').value,
+    completed: false,
+    created: Date.now()
+  });
+  saveStorage('mc_todos', todos);
+  document.getElementById('todo-input').value = '';
+  renderTodos();
+}
+
+function toggleTodo(id) {
+  const t = todos.find(t => t.id === id);
+  if (t) { t.completed = !t.completed; saveStorage('mc_todos', todos); renderTodos(); }
+}
+
+function deleteTodo(id) {
+  todos = todos.filter(t => t.id !== id);
+  saveStorage('mc_todos', todos);
+  renderTodos();
+}
+
+// ═══════════════════════════════════════════════════════
+//  CLOCK & UTILS
+// ═══════════════════════════════════════════════════════
+
+function updateClock() {
+  const now = new Date();
+  const str = now.toLocaleString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+  document.getElementById('topbar-time').textContent = str;
+  document.getElementById('sidebar-time').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function refreshAll() {
+  renderAgents();
+  renderCron();
+  renderTasks();
+  renderTodos();
+}
+
+// Close modal on overlay click
+document.getElementById('task-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeTaskModal();
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeTaskModal();
+});
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+
+// Set default action button visibility
+document.getElementById('topbar-action').style.display = 'none';
+
+updateClock();
+setInterval(updateClock, 1000);
+initCharts();
+renderAgents();
+renderCron();
+renderTasks();
+renderTodos();
+</script>
+</body>
 </html>
