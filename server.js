@@ -13,6 +13,16 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Read index.html once on startup
+let indexHtml = '';
+try {
+  indexHtml = readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf-8');
+} catch (e) {
+  console.warn('Could not read index.html:', e.message);
+}
+
+// Serve static files from public folder
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Data storage for tasks/todos
@@ -268,7 +278,16 @@ app.delete('/api/todos/:id', (req, res) => {
 
 // SPA fallback - serve index.html for all non-API routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  if (indexHtml) {
+    res.type('text/html').send(indexHtml);
+  } else {
+    try {
+      const html = readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf-8');
+      res.type('text/html').send(html);
+    } catch (e) {
+      res.status(500).send('Error loading dashboard');
+    }
+  }
 });
 
 // Helper functions
