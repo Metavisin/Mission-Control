@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Data storage for tasks/todos
 const dataFile = path.join(__dirname, 'data.json');
@@ -264,6 +264,11 @@ app.delete('/api/todos/:id', (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+// SPA fallback - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Helper functions
